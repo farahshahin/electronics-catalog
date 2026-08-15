@@ -154,33 +154,6 @@ export default function ProductFilters({
       </Box>
 
       <Divider sx={{ my: 2 }} />
-
-      <Box sx={{ p: { xs: 1, md: 1.5 }, border: '1px solid #edf2f8', borderRadius: 2, bgcolor: '#f9fbff' }}>
-        <Typography variant="body2" fontWeight={700} sx={{ mb: 1, fontSize: { xs: 12.5, md: 14 } }}>
-          Minimum rating
-        </Typography>
-
-        <Stack spacing={0.1}>
-          {ratings.map((item) => (
-            <FormControlLabel
-              key={item}
-              control={
-                <Checkbox
-                  checked={rating === item}
-                  onChange={() => setRating(rating === item ? 0 : item)}
-                  size="small"
-                  sx={{
-                    color: 'primary.main',
-                    '&.Mui-checked': { color: 'primary.main' },
-                  }}
-                />
-              }
-              label={<Typography variant="body2">{item}+ stars</Typography>}
-              sx={{ m: 0, px: 0.5, borderRadius: 1.5, '&:hover': { bgcolor: '#f7f9fc' } }}
-            />
-          ))}
-        </Stack>
-      </Box>
     </Paper>
   );
 }
