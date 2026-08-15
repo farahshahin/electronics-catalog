@@ -1,14 +1,16 @@
 import { AddShoppingCart, ArrowBack } from '@mui/icons-material';
 import { Box, Button, Chip, Container, Divider, Grid, Rating, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
 import { products, formatPrice } from '@/data/catalog';
 import ProductCard from '@/components/ProductCard';
 
-export default function ProductDetails({ id }: { id: string }) {
+export default function ProductDetails() {
+  const navigate = useNavigate();
+  const { id } = useParams();
   const product = products.find((p) => p.id === id) ?? products[0];
 
   const goBack = () => {
-    window.history.pushState({}, '', '/products');
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate('/products');
   };
 
   const addToCart = (event?: { stopPropagation: () => void; preventDefault?: () => void }) => {

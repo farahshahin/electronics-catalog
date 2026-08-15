@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Container,
   Grid,
   Typography,
 } from '@mui/material';
+import { useSearchParams } from 'react-router-dom';
 
 import { products } from '@/data/catalog';
 
@@ -13,13 +14,11 @@ import ProductGrid from '@/components/ProductGrid';
 import ProductSearchBar from '@/components/ProductSearchBar';
 
 export default function Products() {
-  const params = new URLSearchParams(
-    window.location.search
-  );
+  const [searchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+  const searchFromUrl = searchParams.get('search');
 
-  const categoryFromUrl = params.get('category');
-
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(searchFromUrl || '');
   const [category, setCategory] = useState(
     categoryFromUrl || 'All categories'
   );
@@ -32,6 +31,11 @@ export default function Products() {
   const [sort, setSort] = useState('Featured');
   const [mobileFilters, setMobileFilters] =
     useState(false);
+
+  useEffect(() => {
+    setCategory(categoryFromUrl || 'All categories');
+    setQuery(searchFromUrl || '');
+  }, [categoryFromUrl, searchFromUrl]);
 
   const filteredProducts = useMemo(() => {
     return products

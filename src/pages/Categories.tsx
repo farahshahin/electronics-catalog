@@ -1,20 +1,16 @@
 import { Container } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { categories } from '@/data/categories';
 
 import CategoryHeader from '@/components/CategoryHeader';
 import CategoryGrid from '@/components/CategoryGrid';
 
 export default function Categories() {
+  const navigate = useNavigate();
+
   const goToProducts = (categoryName: string) => {
     const category = encodeURIComponent(categoryName);
-
-    window.history.pushState(
-      {},
-      '',
-      `/products?category=${category}`
-    );
-
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate(`/products?category=${category}`);
   };
 
   return (

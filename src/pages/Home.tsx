@@ -1,4 +1,5 @@
 import { Box, Container } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 import HomeHero from '@/components/HomeHero';
 import HomeBenefits from '@/components/HomeBenefits';
@@ -8,9 +9,10 @@ import HomeNewArrivals from '@/components/HomeNewArrivals';
 import HomeTestimonials from '@/components/HomeTestimonials';
 
 export default function Home() {
+  const navigate = useNavigate();
+
   const goTo = (path: string) => {
-    window.history.pushState({}, '', path);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigate(path);
   };
 
   const goToProducts = () => {
