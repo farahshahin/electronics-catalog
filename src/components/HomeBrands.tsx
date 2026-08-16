@@ -11,6 +11,7 @@ import {
   ArrowBackIos,
   ArrowForwardIos,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const brands = [
   { name: 'Apple', logo: 'https://cdn.simpleicons.org/apple' },
@@ -29,6 +30,8 @@ const brands = [
 
 export default function HomeBrands() {
   const theme = useTheme();
+  const navigate = useNavigate();
+
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const visibleCount = isMobile ? 2 : 5;
 
@@ -42,6 +45,10 @@ export default function HomeBrands() {
 
   const previous = () => {
     setStartIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleBrandClick = (brandName: string) => {
+    navigate(`/products?brand=${encodeURIComponent(brandName)}`);
   };
 
   const visibleBrands = brands.slice(
@@ -108,6 +115,14 @@ export default function HomeBrands() {
           {visibleBrands.map(({ name, logo }) => (
             <Box
               key={name}
+              onClick={() => handleBrandClick(name)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  handleBrandClick(name);
+                }
+              }}
               sx={{
                 flex: '1 1 0',
                 minWidth: 0,
@@ -126,6 +141,12 @@ export default function HomeBrands() {
                   borderColor: 'primary.main',
                   boxShadow: 2,
                   transform: 'translateY(-2px)',
+                },
+
+                '&:focus-visible': {
+                  outline: '2px solid',
+                  outlineColor: 'primary.main',
+                  outlineOffset: 2,
                 },
               }}
             >
@@ -151,8 +172,13 @@ export default function HomeBrands() {
           ))}
         </Stack>
 
-        <IconButton onClick={next} disabled={startIndex + visibleCount >= brands.length} size="small"
-          sx={{ flexShrink: 0, width: { xs: 34, md: 42 },
+        <IconButton
+          onClick={next}
+          disabled={startIndex + visibleCount >= brands.length}
+          size="small"
+          sx={{
+            flexShrink: 0,
+            width: { xs: 34, md: 42 },
             height: { xs: 34, md: 42 },
             border: '1px solid',
             borderColor: 'divider',
@@ -163,9 +189,14 @@ export default function HomeBrands() {
             },
           }}
         >
-          <ArrowForwardIos sx={{fontSize: { xs: 15, md: 18 }, }} />
+          <ArrowForwardIos
+            sx={{
+              fontSize: { xs: 15, md: 18 },
+            }}
+          />
         </IconButton>
       </Box>
     </Box>
   );
 }
+

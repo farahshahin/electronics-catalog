@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
 import {
   Box,
   Button,
@@ -8,31 +9,54 @@ import {
   Rating,
   Typography,
 } from '@mui/material';
+
 import {
   AddShoppingCart,
   Favorite,
   FavoriteBorder,
 } from '@mui/icons-material';
+
 import { useNavigate } from 'react-router-dom';
+
 import type { Product } from '@/data/catalog';
 import { formatPrice } from '@/data/catalog';
 
 export default function ProductCard({ product }: { product: Product }) {
   const navigate = useNavigate();
+
   const [liked, setLiked] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  useEffect(() => {
+    const handleCartUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const { productId, success } = customEvent.detail || {};
+
+      if (productId === product.id && success === true) {
+        setAdded(true);
+
+        setTimeout(() => {
+          setAdded(false);
+        }, 2000);
+      }
+    };
+
+    window.addEventListener('ElectroShop:cart-updated', handleCartUpdated);
+
+    return () => {
+      window.removeEventListener('ElectroShop:cart-updated', handleCartUpdated);
+    };
+  }, [product.id]);
 
   const go = () => {
     navigate(`/products/${product.id}`);
   };
 
-  const addToCart = (
-    event?: {
-      stopPropagation: () => void;
-      preventDefault?: () => void;
-    }
-  ) => {
+  const addToCart = (event?: { stopPropagation: () => void; preventDefault?: () => void }) => {
     event?.stopPropagation();
     event?.preventDefault?.();
+
+    setAdded(false);
 
     window.dispatchEvent(
       new CustomEvent('ElectroShop:add-to-cart', {
@@ -44,9 +68,7 @@ export default function ProductCard({ product }: { product: Product }) {
     );
   };
 
-  const toggleLike = (event?: {
-    stopPropagation: () => void;
-  }) => {
+  const toggleLike = (event?: { stopPropagation: () => void }) => {
     event?.stopPropagation();
     setLiked((value) => !value);
   };
@@ -62,7 +84,6 @@ export default function ProductCard({ product }: { product: Product }) {
         boxShadow: '0 8px 30px rgba(22,53,95,.045)',
         overflow: 'hidden',
         transition: 'transform .25s, box-shadow .25s',
-
         '&:hover': {
           transform: { xs: 'none', sm: 'translateY(-5px)' },
           boxShadow: {
@@ -73,6 +94,7 @@ export default function ProductCard({ product }: { product: Product }) {
       }}
     >
       {/* Product Image */}
+
       <Box
         sx={{
           position: 'relative',
@@ -82,6 +104,8 @@ export default function ProductCard({ product }: { product: Product }) {
         }}
         onClick={go}
       >
+        {/* Favorite */}
+
         <IconButton
           onClick={toggleLike}
           size="small"
@@ -93,20 +117,15 @@ export default function ProductCard({ product }: { product: Product }) {
             height: { xs: 28, sm: 32 },
             bgcolor: 'white',
             color: liked ? 'error.main' : 'text.secondary',
-
-            '&:hover': {
-              bgcolor: 'white',
-            },
-
-            '& svg': {
-              fontSize: { xs: 16, sm: 18 },
-            },
-
+            '&:hover': { bgcolor: 'white' },
+            '& svg': { fontSize: { xs: 16, sm: 18 } },
             zIndex: 1,
           }}
         >
           {liked ? <Favorite /> : <FavoriteBorder />}
         </IconButton>
+
+        {/* Image */}
 
         <Box
           component="img"
@@ -114,12 +133,7 @@ export default function ProductCard({ product }: { product: Product }) {
           alt={product.name}
           sx={{
             width: '100%',
-            height: {
-              xs: 120,
-              sm: 160,
-              md: 190,
-              lg: 205,
-            },
+            height: { xs: 120, sm: 160, md: 190, lg: 205 },
             objectFit: 'cover',
             mixBlendMode: 'multiply',
             borderRadius: { xs: 1.5, sm: 2 },
@@ -128,62 +142,47 @@ export default function ProductCard({ product }: { product: Product }) {
       </Box>
 
       {/* Content */}
+
       <CardContent
         sx={{
-          p: {
-            xs: 1.25,
-            sm: 1.75,
-            md: 2.25,
-          },
+          p: { xs: 1.25, sm: 1.75, md: 2.25 },
           display: 'flex',
           flexDirection: 'column',
           flexGrow: 1,
         }}
       >
         {/* Category */}
+
         <Typography
           variant="caption"
           sx={{
             color: 'primary.main',
             fontWeight: 700,
             mb: { xs: 0.4, sm: 0.6, md: 0.7 },
-            fontSize: {
-              xs: '0.65rem',
-              sm: '0.7rem',
-              md: '0.75rem',
-            },
+            fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' },
           }}
         >
           {product.category}
         </Typography>
 
-        {/* Product name */}
+        {/* Product Name */}
+
         <Typography
           onClick={go}
           sx={{
             fontWeight: 700,
             lineHeight: 1.3,
-            minHeight: {
-              xs: 36,
-              sm: 42,
-              md: 44,
-            },
-            fontSize: {
-              xs: '0.8rem',
-              sm: '0.9rem',
-              md: '1rem',
-            },
+            minHeight: { xs: 36, sm: 42, md: 44 },
+            fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
             cursor: 'pointer',
-
-            '&:hover': {
-              color: 'primary.main',
-            },
+            '&:hover': { color: 'primary.main' },
           }}
         >
           {product.name}
         </Typography>
 
         {/* Rating */}
+
         <Box
           sx={{
             display: 'flex',
@@ -199,11 +198,7 @@ export default function ProductCard({ product }: { product: Product }) {
             readOnly
             sx={{
               '& .MuiRating-icon': {
-                fontSize: {
-                  xs: 14,
-                  sm: 17,
-                  md: 19,
-                },
+                fontSize: { xs: 14, sm: 17, md: 19 },
               },
             }}
           />
@@ -212,11 +207,7 @@ export default function ProductCard({ product }: { product: Product }) {
             variant="caption"
             color="text.secondary"
             sx={{
-              fontSize: {
-                xs: '0.6rem',
-                sm: '0.65rem',
-                md: '0.75rem',
-              },
+              fontSize: { xs: '0.6rem', sm: '0.65rem', md: '0.75rem' },
             }}
           >
             {product.rating} ({product.reviews})
@@ -224,6 +215,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </Box>
 
         {/* Price */}
+
         <Box
           sx={{
             display: 'flex',
@@ -237,11 +229,7 @@ export default function ProductCard({ product }: { product: Product }) {
             sx={{
               fontWeight: 800,
               color: '#15233c',
-              fontSize: {
-                xs: '0.95rem',
-                sm: '1.05rem',
-                md: '1.25rem',
-              },
+              fontSize: { xs: '0.95rem', sm: '1.05rem', md: '1.25rem' },
             }}
           >
             {formatPrice(product.price)}
@@ -251,61 +239,37 @@ export default function ProductCard({ product }: { product: Product }) {
             sx={{
               color: 'text.disabled',
               textDecoration: 'line-through',
-              fontSize: {
-                xs: '0.65rem',
-                sm: '0.7rem',
-                md: '0.875rem',
-              },
+              fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.875rem' },
             }}
           >
             {formatPrice(product.oldPrice)}
           </Typography>
         </Box>
 
-        {/* Add to cart */}
+        {/* Add To Cart */}
+
         <Button
           fullWidth
           variant="contained"
-          startIcon={<AddShoppingCart />}
+          startIcon={added ? undefined : <AddShoppingCart />}
           onClick={addToCart}
+          disabled={added}
           sx={{
             mt: 'auto',
             borderRadius: { xs: 1.5, sm: 2 },
-            py: {
-              xs: 0.7,
-              sm: 0.9,
-              md: 1.15,
-            },
-            minHeight: {
-              xs: 34,
-              sm: 40,
-              md: 44,
-            },
+            py: { xs: 0.7, sm: 0.9, md: 1.15 },
+            minHeight: { xs: 34, sm: 40, md: 44 },
             fontWeight: 700,
-            fontSize: {
-              xs: '0.7rem',
-              sm: '0.8rem',
-              md: '0.9rem',
-            },
-
+            fontSize: { xs: '0.7rem', sm: '0.8rem', md: '0.9rem' },
             '& .MuiButton-startIcon': {
-              marginRight: {
-                xs: 0.3,
-                sm: 0.5,
-                md: 1,
-              },
-
+              marginRight: { xs: 0.3, sm: 0.5, md: 1 },
               '& svg': {
-                fontSize: {
-                  xs: 16,
-                  sm: 18,
-                  md: 20,
-                },
+                fontSize: { xs: 16, sm: 18, md: 20 },
               },
             },
           }}
         >
-          Add to cart
+          {added ? 'Added to cart ✓' : 'Add to cart'}
         </Button>
       </CardContent>
     </Card>
