@@ -38,7 +38,6 @@ export default function Home() {
 
       <Container maxWidth="lg">
         <HomeCategories onViewAll={goToCategories} onCategoryClick={goToCategory} />
-        <HomeBrands />
         <HomeNewArrivals onViewAll={goToProducts} />
         <HomeTestimonials />
       </Container>
