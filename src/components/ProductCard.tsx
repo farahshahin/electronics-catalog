@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-
 import {
   Box,
   Button,
@@ -31,17 +30,32 @@ export default function ProductCard({
   const [liked, setLiked] = useState(false);
   const [added, setAdded] = useState(false);
 
-  // Cart update listener
   useEffect(() => {
-    const handleCartUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent;
+    try {
+      const wishlist = JSON.parse(
+        localStorage.getItem("ElectroShop:wishlist") || "[]"
+      );
 
-      const { productId, success } =
-        customEvent.detail || {};
+      const exists = wishlist.some(
+        (item: any) => item.productId === product.id
+      );
+
+      setLiked(exists);
+    } catch (error) {
+      console.error("Failed to read wishlist:", error);
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data;
+
+      if (!message?.type) {
+        return;
+      }
 
       if (
-        productId === product.id &&
-        success === true
+        message.type === "CART_UPDATED" &&
+        message.productId === product.id &&
+        message.success === true
       ) {
         setAdded(true);
 
@@ -49,27 +63,26 @@ export default function ProductCard({
           setAdded(false);
         }, 2000);
       }
+
+      if (
+        message.type === "WISHLIST_STATE" &&
+        message.productId === product.id
+      ) {
+        setLiked(message.liked === true);
+      }
     };
 
-    window.addEventListener(
-      "ElectroShop:cart-updated",
-      handleCartUpdated
-    );
+    window.addEventListener("message", handleMessage);
 
     return () => {
-      window.removeEventListener(
-        "ElectroShop:cart-updated",
-        handleCartUpdated
-      );
+      window.removeEventListener("message", handleMessage);
     };
   }, [product.id]);
 
-  // Go to product details
   const go = () => {
     navigate(`/products/${product.id}`);
   };
 
-  // Add product to cart
   const addToCart = (
     event?: {
       stopPropagation: () => void;
@@ -81,17 +94,17 @@ export default function ProductCard({
 
     setAdded(false);
 
-    window.dispatchEvent(
-      new CustomEvent("ElectroShop:add-to-cart", {
-        detail: {
-          productId: product.id,
-          delta: 1,
-        },
-      })
+    window.parent.postMessage(
+      {
+        type: "ADD_TO_CART",
+        productId: product.id,
+        product: product,
+        delta: 1,
+      },
+      "*"
     );
   };
 
-  // Add / remove product from wishlist
   const toggleLike = (
     event?: {
       stopPropagation: () => void;
@@ -103,14 +116,14 @@ export default function ProductCard({
 
     setLiked(nextLiked);
 
-    window.dispatchEvent(
-      new CustomEvent("ElectroShop:wishlist-updated", {
-        detail: {
-          productId: product.id,
-          liked: nextLiked,
-          product,
-        },
-      })
+    window.parent.postMessage(
+      {
+        type: "WISHLIST_UPDATED",
+        productId: product.id,
+        liked: nextLiked,
+        product: product,
+      },
+      "*"
     );
   };
 
@@ -126,11 +139,9 @@ export default function ProductCard({
           sm: 3,
           md: 3.5,
         },
-        boxShadow:
-          "0 8px 30px rgba(22,53,95,.045)",
+        boxShadow: "0 8px 30px rgba(22,53,95,.045)",
         overflow: "hidden",
-        transition:
-          "transform .25s, box-shadow .25s",
+        transition: "transform .25s, box-shadow .25s",
 
         "&:hover": {
           transform: {
@@ -145,7 +156,6 @@ export default function ProductCard({
         },
       }}
     >
-      {/* Product Image */}
       <Box
         sx={{
           position: "relative",
@@ -159,7 +169,6 @@ export default function ProductCard({
         }}
         onClick={go}
       >
-        {/* Wishlist Button */}
         <IconButton
           onClick={toggleLike}
           size="small"
@@ -208,14 +217,9 @@ export default function ProductCard({
             zIndex: 1,
           }}
         >
-          {liked ? (
-            <Favorite />
-          ) : (
-            <FavoriteBorder />
-          )}
+          {liked ? <Favorite /> : <FavoriteBorder />}
         </IconButton>
 
-        {/* Product Image */}
         <Box
           component="img"
           src={product.image}
@@ -231,7 +235,6 @@ export default function ProductCard({
             },
 
             objectFit: "cover",
-
             mixBlendMode: "multiply",
 
             borderRadius: {
@@ -242,7 +245,6 @@ export default function ProductCard({
         />
       </Box>
 
-      {/* Product Information */}
       <CardContent
         sx={{
           p: {
@@ -256,7 +258,6 @@ export default function ProductCard({
           flexGrow: 1,
         }}
       >
-        {/* Category */}
         <Typography
           variant="caption"
           sx={{
@@ -279,7 +280,6 @@ export default function ProductCard({
           {product.category}
         </Typography>
 
-        {/* Product Name */}
         <Typography
           onClick={go}
           sx={{
@@ -308,7 +308,6 @@ export default function ProductCard({
           {product.name}
         </Typography>
 
-        {/* Rating */}
         <Box
           sx={{
             display: "flex",
@@ -358,7 +357,6 @@ export default function ProductCard({
           </Typography>
         </Box>
 
-        {/* Price */}
         <Box
           sx={{
             display: "flex",
@@ -398,30 +396,29 @@ export default function ProductCard({
             {formatPrice(product.price)}
           </Typography>
 
-          <Typography
-            sx={{
-              color: "text.disabled",
-              textDecoration: "line-through",
+          {product.oldPrice && (
+            <Typography
+              sx={{
+                color: "text.disabled",
+                textDecoration: "line-through",
 
-              fontSize: {
-                xs: "0.65rem",
-                sm: "0.7rem",
-                md: "0.875rem",
-              },
-            }}
-          >
-            {formatPrice(product.oldPrice)}
-          </Typography>
+                fontSize: {
+                  xs: "0.65rem",
+                  sm: "0.7rem",
+                  md: "0.875rem",
+                },
+              }}
+            >
+              {formatPrice(product.oldPrice)}
+            </Typography>
+          )}
         </Box>
 
-        {/* Add To Cart */}
         <Button
           fullWidth
           variant="contained"
           startIcon={
-            added ? undefined : (
-              <AddShoppingCart />
-            )
+            added ? undefined : <AddShoppingCart />
           }
           onClick={addToCart}
           disabled={added}
@@ -470,9 +467,7 @@ export default function ProductCard({
             },
           }}
         >
-          {added
-            ? "Added to cart ✓"
-            : "Add to cart"}
+          {added ? "Added to cart ✓" : "Add to cart"}
         </Button>
       </CardContent>
     </Card>
