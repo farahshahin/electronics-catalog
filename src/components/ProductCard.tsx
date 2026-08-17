@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   Box,
   Button,
@@ -30,27 +31,53 @@ export default function ProductCard({
   const [liked, setLiked] = useState(false);
   const [added, setAdded] = useState(false);
 
+  // =====================================================
+  // LOAD WISHLIST STATE FROM SHELL
+  // =====================================================
+
   useEffect(() => {
-    try {
-      const wishlist = JSON.parse(
-        localStorage.getItem("ElectroShop:wishlist") || "[]"
-      );
-
-      const exists = wishlist.some(
-        (item: any) => item.productId === product.id
-      );
-
-      setLiked(exists);
-    } catch (error) {
-      console.error("Failed to read wishlist:", error);
-    }
-
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
 
       if (!message?.type) {
         return;
       }
+
+      // ================================================
+      // INITIAL WISHLIST DATA
+      // ================================================
+
+      if (message.type === "WISHLIST_DATA") {
+        const wishlist = Array.isArray(message.wishlist)
+          ? message.wishlist
+          : [];
+
+        const exists = wishlist.some(
+          (item: any) =>
+            item.productId === product.id
+        );
+
+        setLiked(exists);
+
+        return;
+      }
+
+      // ================================================
+      // WISHLIST STATE
+      // ================================================
+
+      if (
+        message.type === "WISHLIST_STATE" &&
+        message.productId === product.id
+      ) {
+        setLiked(message.liked === true);
+
+        return;
+      }
+
+      // ================================================
+      // CART UPDATED
+      // ================================================
 
       if (
         message.type === "CART_UPDATED" &&
@@ -62,26 +89,43 @@ export default function ProductCard({
         setTimeout(() => {
           setAdded(false);
         }, 2000);
-      }
 
-      if (
-        message.type === "WISHLIST_STATE" &&
-        message.productId === product.id
-      ) {
-        setLiked(message.liked === true);
+        return;
       }
     };
 
-    window.addEventListener("message", handleMessage);
+    window.addEventListener(
+      "message",
+      handleMessage
+    );
+
+    // Ask Shell for the current wishlist
+    window.parent.postMessage(
+      {
+        type: "GET_WISHLIST",
+      },
+      "*"
+    );
 
     return () => {
-      window.removeEventListener("message", handleMessage);
+      window.removeEventListener(
+        "message",
+        handleMessage
+      );
     };
   }, [product.id]);
+
+  // =====================================================
+  // PRODUCT DETAILS
+  // =====================================================
 
   const go = () => {
     navigate(`/products/${product.id}`);
   };
+
+  // =====================================================
+  // ADD TO CART
+  // =====================================================
 
   const addToCart = (
     event?: {
@@ -105,6 +149,10 @@ export default function ProductCard({
     );
   };
 
+  // =====================================================
+  // TOGGLE WISHLIST
+  // =====================================================
+
   const toggleLike = (
     event?: {
       stopPropagation: () => void;
@@ -114,8 +162,10 @@ export default function ProductCard({
 
     const nextLiked = !liked;
 
+    // Update UI immediately
     setLiked(nextLiked);
 
+    // Send update to Shell
     window.parent.postMessage(
       {
         type: "WISHLIST_UPDATED",
@@ -127,21 +177,32 @@ export default function ProductCard({
     );
   };
 
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
     <Card
       sx={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
+
         border: "1px solid #e9edf3",
+
         borderRadius: {
           xs: 2.5,
           sm: 3,
           md: 3.5,
         },
-        boxShadow: "0 8px 30px rgba(22,53,95,.045)",
+
+        boxShadow:
+          "0 8px 30px rgba(22,53,95,.045)",
+
         overflow: "hidden",
-        transition: "transform .25s, box-shadow .25s",
+
+        transition:
+          "transform .25s, box-shadow .25s",
 
         "&:hover": {
           transform: {
@@ -150,25 +211,36 @@ export default function ProductCard({
           },
 
           boxShadow: {
-            xs: "0 8px 30px rgba(22,53,95,.045)",
-            sm: "0 18px 34px rgba(22,53,95,.12)",
+            xs:
+              "0 8px 30px rgba(22,53,95,.045)",
+
+            sm:
+              "0 18px 34px rgba(22,53,95,.12)",
           },
         },
       }}
     >
+      {/* =================================================
+          IMAGE
+      ================================================= */}
+
       <Box
         sx={{
           position: "relative",
           bgcolor: "#f5f8fc",
+
           p: {
             xs: 1,
             sm: 1.5,
             md: 2,
           },
+
           cursor: "pointer",
         }}
         onClick={go}
       >
+        {/* WISHLIST */}
+
         <IconButton
           onClick={toggleLike}
           size="small"
@@ -217,8 +289,14 @@ export default function ProductCard({
             zIndex: 1,
           }}
         >
-          {liked ? <Favorite /> : <FavoriteBorder />}
+          {liked ? (
+            <Favorite />
+          ) : (
+            <FavoriteBorder />
+          )}
         </IconButton>
+
+        {/* PRODUCT IMAGE */}
 
         <Box
           component="img"
@@ -235,6 +313,7 @@ export default function ProductCard({
             },
 
             objectFit: "cover",
+
             mixBlendMode: "multiply",
 
             borderRadius: {
@@ -244,6 +323,10 @@ export default function ProductCard({
           }}
         />
       </Box>
+
+      {/* =================================================
+          CONTENT
+      ================================================= */}
 
       <CardContent
         sx={{
@@ -258,6 +341,8 @@ export default function ProductCard({
           flexGrow: 1,
         }}
       >
+        {/* CATEGORY */}
+
         <Typography
           variant="caption"
           sx={{
@@ -279,6 +364,8 @@ export default function ProductCard({
         >
           {product.category}
         </Typography>
+
+        {/* PRODUCT NAME */}
 
         <Typography
           onClick={go}
@@ -307,6 +394,8 @@ export default function ProductCard({
         >
           {product.name}
         </Typography>
+
+        {/* RATING */}
 
         <Box
           sx={{
@@ -356,6 +445,8 @@ export default function ProductCard({
             {product.rating} ({product.reviews})
           </Typography>
         </Box>
+
+        {/* PRICE */}
 
         <Box
           sx={{
@@ -414,11 +505,15 @@ export default function ProductCard({
           )}
         </Box>
 
+        {/* ADD TO CART */}
+
         <Button
           fullWidth
           variant="contained"
           startIcon={
-            added ? undefined : <AddShoppingCart />
+            added
+              ? undefined
+              : <AddShoppingCart />
           }
           onClick={addToCart}
           disabled={added}
@@ -467,7 +562,9 @@ export default function ProductCard({
             },
           }}
         >
-          {added ? "Added to cart ✓" : "Add to cart"}
+          {added
+            ? "Added to cart ✓"
+            : "Add to cart"}
         </Button>
       </CardContent>
     </Card>
